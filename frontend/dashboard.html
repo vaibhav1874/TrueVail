@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <title>TrueVail Dashboard</title>
+  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <!-- Firebase SDK -->
+  <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-firestore-compat.js"></script>
+</head>
+
+<body>
+
+  <div class="dashboard-container">
+    <div class="sidebar">
+      <div class="logo">
+        <i class="fas fa-shield-alt"></i>
+        <h2>TrueVail</h2>
+      </div>
+
+      <nav class="nav-menu">
+        <a href="#" class="nav-link active" onclick="showTab('news')">
+          <i class="fas fa-newspaper"></i>
+          <span>Fake News Detection</span>
+        </a>
+
+        <a href="#" class="nav-link" onclick="showTab('privacy')">
+          <i class="fas fa-user-secret"></i>
+          <span>Privacy Risk Analysis</span>
+        </a>
+
+        <a href="#" class="nav-link" onclick="showTab('deepfake')">
+          <i class="fas fa-eye-slash"></i>
+          <span>Deep Fake Detection</span>
+        </a>
+
+        <a href="#" class="nav-link" onclick="showTab('link-analysis')">
+          <i class="fas fa-link"></i>
+          <span>Link Analysis</span>
+        </a>
+
+        <a href="#" class="nav-link" onclick="showTab('history')">
+          <i class="fas fa-history"></i>
+          <span>Analysis History</span>
+        </a>
+      </nav>
+
+      <div class="user-profile">
+        <div class="user-info">
+          <i class="fas fa-user-circle"></i>
+          <span>User</span>
+        </div>
+        <button onclick="logoutFromFirebase()" class="logout-btn">
+          <i class="fas fa-sign-out-alt"></i>
+          <span>Logout</span>
+        </button>
+      </div>
+    </div>
+
+    <div class="main-content">
+      <div class="header">
+        <h1>Content Analysis Dashboard</h1>
+        <p>Verify authenticity and identify risks in digital content</p>
+      </div>
+
+      <div class="analysis-sections">
+        <!-- Fake News Analysis Tab -->
+        <div id="news" class="tab-content active">
+          <div class="section-header">
+            <h2><i class="fas fa-newspaper"></i> Fake News Detection</h2>
+            <p>Analyze text content for authenticity and reliability</p>
+          </div>
+
+          <div class="analysis-tools">
+            <div class="input-area">
+              <label for="newsInput">Paste news content to analyze:</label>
+              <textarea id="newsInput"
+                placeholder="Paste news article, social media post, or any content to analyze..."></textarea>
+
+              <div class="action-buttons">
+                <button onclick="analyzeNews()" class="analyze-btn">
+                  <i class="fas fa-search"></i> Analyze Content
+                </button>
+                <button onclick="clearContent('newsInput', 'newsResult')" class="clear-btn">
+                  <i class="fas fa-trash"></i> Clear
+                </button>
+              </div>
+            </div>
+
+            <div class="result-area">
+              <div class="result-header">
+                <h3>Analysis Results</h3>
+                <div class="result-status">
+                  <span class="status-indicator"></span>
+                  <span class="status-text">Ready</span>
+                </div>
+              </div>
+
+              <div id="newsResult" class="result-content">
+                <p class="placeholder-text">Results will appear here after analysis...</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Link Analysis Tab -->
+        <div id="link-analysis" class="tab-content hidden">
+          <div class="section-header">
+            <h2><i class="fas fa-link"></i> News Link Analysis</h2>
+            <p>Provide a URL to analyze the authenticity of the news article</p>
+          </div>
+
+          <div class="analysis-tools">
+            <div class="input-area">
+              <label for="linkInput">Paste news article URL to analyze:</label>
+              <input type="text" id="linkInput" placeholder="https://example.com/news-article..." class="url-input">
+
+              <div class="action-buttons">
+                <button onclick="analyzeLink()" class="analyze-btn">
+                  <i class="fas fa-search"></i> Analyze Link
+                </button>
+                <button onclick="clearContent('linkInput', 'linkResult')" class="clear-btn">
+                  <i class="fas fa-trash"></i> Clear
+                </button>
+              </div>
+            </div>
+
+            <div class="result-area">
+              <div class="result-header">
+                <h3>Link Analysis Results</h3>
+                <div class="result-status">
+                  <span class="status-indicator"></span>
+                  <span class="status-text">Ready</span>
+                </div>
+              </div>
+
+              <div id="linkResult" class="result-content">
+                <p class="placeholder-text">Results will appear here after analysis...</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div id="privacy" class="tab-content hidden">
+          <div class="section-header">
+            <h2><i class="fas fa-user-secret"></i> Privacy Risk Analysis</h2>
+            <p>Identify personal information and privacy risks in content</p>
+          </div>
+
+          <div class="analysis-tools">
+            <div class="input-area">
+              <label for="privacyInput">Paste content for privacy analysis:</label>
+              <textarea id="privacyInput"
+                placeholder="Paste text, document, or content to check for privacy risks..."></textarea>
+
+              <div class="action-buttons">
+                <button onclick="analyzePrivacy()" class="analyze-btn">
+                  <i class="fas fa-shield-alt"></i> Check Privacy
+                </button>
+                <button onclick="clearContent('privacyInput', 'privacyResult')" class="clear-btn">
+                  <i class="fas fa-trash"></i> Clear
+                </button>
+              </div>
+            </div>
+
+            <div class="result-area">
+              <div class="result-header">
+                <h3>Privacy Analysis Results</h3>
+                <div class="result-status">
+                  <span class="status-indicator"></span>
+                  <span class="status-text">Ready</span>
+                </div>
+              </div>
+
+              <div id="privacyResult" class="result-content">
+                <p class="placeholder-text">Privacy risk assessment will appear here...</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Deep Fake Detection Tab -->
+        <div id="deepfake" class="tab-content hidden">
+          <div class="section-header">
+            <h2><i class="fas fa-eye-slash"></i> Deep Fake Detection</h2>
+            <p>Upload images or videos to detect manipulation</p>
+          </div>
+
+          <div class="analysis-tools">
+            <div class="input-area">
+              <label for="deepfakeFile">Upload media file:</label>
+              <div class="file-upload-area">
+                <i class="fas fa-cloud-upload-alt"></i>
+                <p>Drag & drop your image/video here or click to browse</p>
+                <input type="file" id="deepfakeFile" accept="image/*,video/*">
+                <button class="browse-btn">Browse Files</button>
+              </div>
+
+              <div class="action-buttons">
+                <button onclick="analyzeDeepfake()" class="analyze-btn">
+                  <i class="fas fa-search"></i> Analyze Media
+                </button>
+                <button onclick="clearDeepfakeAnalysis()" class="clear-btn">
+                  <i class="fas fa-trash"></i> Clear
+                </button>
+              </div>
+            </div>
+
+            <div class="result-area">
+              <div class="result-header">
+                <h3>Deep Fake Analysis Results</h3>
+                <div class="result-status">
+                  <span class="status-indicator"></span>
+                  <span class="status-text">Ready</span>
+                </div>
+              </div>
+
+              <div id="deepfakeResult" class="result-content">
+                <p class="placeholder-text">Deep fake detection results will appear here...</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Analysis History Tab -->
+        <div id="history" class="tab-content hidden">
+          <div class="section-header">
+            <h2><i class="fas fa-history"></i> Analysis History</h2>
+            <p>Review your previous analysis results</p>
+          </div>
+
+          <div class="history-content">
+            <div class="history-filters">
+              <select id="historyFilter">
+                <option value="all">All Analyses</option>
+                <option value="news">Fake News</option>
+                <option value="privacy">Privacy Risk</option>
+                <option value="deepfake">Deep Fake</option>
+              </select>
+              <input type="date" id="dateFilter">
+            </div>
+
+            <div class="history-list">
+              <div class="history-item">
+                <div class="history-item-header">
+                  <h4>Fake News Analysis</h4>
+                  <span class="history-date">2023-06-15 14:30</span>
+                </div>
+                <p class="history-content">Sample news article analysis result...</p>
+                <div class="history-actions">
+                  <button class="view-btn">View</button>
+                  <button class="delete-btn">Delete</button>
+                </div>
+              </div>
+
+              <div class="history-item">
+                <div class="history-item-header">
+                  <h4>Privacy Risk Analysis</h4>
+                  <span class="history-date">2023-06-14 11:20</span>
+                </div>
+                <p class="history-content">Privacy risk assessment for document content...</p>
+                <div class="history-actions">
+                  <button class="view-btn">View</button>
+                  <button class="delete-btn">Delete</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+  <script src="firebase-config.js"></script>
+</body>
+
+</html>

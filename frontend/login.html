@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>TrueVail | Login</title>
+  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <!-- Firebase SDK -->
+  <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-firestore-compat.js"></script>
+</head>
+<body class="auth-bg">
+
+<div class="auth-container">
+  <div class="auth-box">
+    <div class="logo-container">
+      <i class="fas fa-shield-alt logo-icon"></i>
+      <h1>TrueVail</h1>
+      <p class="tagline">Detecting Fake News, Deep Fakes & Privacy Risks</p>
+    </div>
+    
+    <div class="input-group">
+      <i class="fas fa-envelope input-icon"></i>
+      <input id="email" placeholder="Email" type="email">
+    </div>
+    
+    <div class="input-group">
+      <i class="fas fa-lock input-icon"></i>
+      <input id="password" type="password" placeholder="Password">
+    </div>
+    
+    <div class="remember-forgot">
+      <label class="checkbox-container">
+        <input type="checkbox">
+        <span class="checkmark"></span>
+        Remember me
+      </label>
+      <a href="#" class="forgot-link">Forgot Password?</a>
+    </div>
+    
+    <button onclick="loginWithFirebase()" class="login-btn">
+      <i class="fas fa-sign-in-alt"></i> Sign In
+    </button>
+    
+    <div class="divider">
+      <span>or continue with</span>
+    </div>
+    
+    <div class="social-login">
+      <button class="social-btn google">
+        <i class="fab fa-google"></i> Google
+      </button>
+      <button class="social-btn github">
+        <i class="fab fa-github"></i> GitHub
+      </button>
+    </div>
+    
+    <p class="signup-text">Don't have an account? <a href="#" onclick="event.preventDefault(); registerWithFirebase();">Sign up</a></p>
+  </div>
+  
+  <div class="auth-features">
+    <div class="feature-card">
+      <i class="fas fa-newspaper feature-icon"></i>
+      <h3>Fake News Detection</h3>
+      <p>Verify the authenticity of news articles and social media posts</p>
+    </div>
+    
+    <div class="feature-card">
+      <i class="fas fa-user-secret feature-icon"></i>
+      <h3>Privacy Risk Analysis</h3>
+      <p>Identify personal information that might be at risk</p>
+    </div>
+    
+    <div class="feature-card">
+      <i class="fas fa-eye-slash feature-icon"></i>
+      <h3>Deep Fake Detection</h3>
+      <p>Identify manipulated media and synthetic content</p>
+    </div>
+  </div>
+</div>
+
+<script src="app.js"></script>
+<script src="firebase-config.js"></script>
+</body>
+</html>

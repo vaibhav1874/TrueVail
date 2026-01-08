@@ -1,0 +1,7 @@
+flask
+flask-cors
+google-generativeai
+protobuf
+requests
+beautifulsoup4
+python-dotenv
