@@ -139,78 +139,160 @@ function analyzeDeepfake() {
     return;
   }
 
-  const fileName = fileInput.files[0].name;
+  const file = fileInput.files[0];
+  const fileName = file.name;
+  const mimeType = file.type;
   resultDiv.innerHTML = `<p>Processing ${fileName}... <i class='fas fa-spinner fa-spin'></i></p>`;
   resultDiv.style.display = "block";
 
-  // Simulate processing delay
-  setTimeout(() => {
-    // Generate a simulated deepfake analysis result
-    const fakeProbability = Math.random();
-    let status, statusClass;
+  const analyzeBtn = document.querySelector('#deepfake .analyze-btn');
+  if (analyzeBtn) analyzeBtn.disabled = true;
 
-    if (fakeProbability > 0.7) {
-      status = "Likely Deepfake";
-      statusClass = "status-likely-fake";
-    } else if (fakeProbability > 0.4) {
-      status = "Uncertain";
-      statusClass = "status-uncertain";
-    } else {
-      status = "Likely Authentic";
-      statusClass = "status-likely-real";
-    }
+  // Use FileReader to read the file as base64
+  const reader = new FileReader();
+  reader.onload = function (e) {
+    const base64Data = e.target.result.split(',')[1]; // Get base64 part only
 
-    const confidence = Math.round(fakeProbability * 100);
-
-    resultDiv.innerHTML = `
-      <div class="analysis-results">
-        <div class="result-summary">
-          <div class="result-item">
-            <span class="label">Status:</span>
-            <span class="value ${statusClass}">${status}</span>
-          </div>
-          <div class="result-item">
-            <span class="label">Confidence:</span>
-            <span class="value">${confidence}%</span>
-          </div>
-        </div>
-        
-        <div class="result-details">
-          <div class="detail-item">
-            <h4>Analysis Details</h4>
-            <p>Pixel-level inconsistencies detected in facial landmarks and lighting patterns.</p>
+    // Send the file to the backend for analysis
+    fetch("http://127.0.0.1:5001/analyze", {
+      method: "POST",
+      body: JSON.stringify({
+        text: fileName,
+        type: "deepfake",
+        image_data: base64Data,
+        mime_type: mimeType
+      }),
+      headers: { "Content-Type": "application/json" }
+    })
+      .then(res => res.json())
+      .then(data => {
+        if (analyzeBtn) analyzeBtn.disabled = false;
+        // If backend returned an error or a fetch-failure note, show friendly message
+        if (data.status === 'Error' || (data.reason && data.reason.toLowerCase().includes('could not fetch'))) {
+          resultDiv.innerHTML = `<p class='placeholder-text'>Could not fetch the file content for deepfake analysis. Showing filename-based heuristic instead.</p>`;
+          if (data.reason) resultDiv.innerHTML += `<p>${data.reason}</p>`;
+          return;
+        }
+        // Format the deepfake analysis result
+        resultDiv.innerHTML = `
+        <div class="analysis-results">
+          <div class="result-summary">
+            <div class="result-item">
+              <span class="label">Status:</span>
+              <span class="value status-${data.status.toLowerCase().replace(' ', '-').replace(/[^a-z0-9-]/g, '')}">${data.status}</span>
+            </div>
+            <div class="result-item">
+              <span class="label">Confidence:</span>
+              <span class="value">${(parseFloat(data.confidence) * 100).toFixed(1)}%</span>
+            </div>
           </div>
           
-          <div class="detail-item">
-            <h4>Metadata Check</h4>
-            <p>No anomalies found in file metadata.</p>
+          <div class="result-details">
+            <div class="detail-item">
+              <h4>Analysis Details</h4>
+              <p>${data.reason}</p>
+            </div>
+            
+            <div class="detail-item">
+              <h4>Technical Assessment</h4>
+              <p>${data.analysis_details?.technical_assessment || 'No technical details available'}</p>
+            </div>
+            
+            <div class="detail-item">
+              <h4>Privacy Risk</h4>
+              <p class="risk-${data.privacy_risk.toLowerCase()}">${data.privacy_risk}</p>
+              <p>${data.privacy_explanation}</p>
+            </div>
+          </div>
+          
+          <div class="full-analysis">
+            <h4>Full Analysis</h4>
+            <pre>Indicators Found: ${data.analysis_details?.indicators_found || 0}\nFake Probability: ${(data.analysis_details?.fake_probability * 100).toFixed(1) || 'N/A'}%\nTechnical Notes: ${data.analysis_details?.technical_assessment || 'No technical notes available'}</pre>
           </div>
         </div>
-        
-        <div class="full-analysis">
-          <h4>Technical Assessment</h4>
-          <p>This analysis is based on simulated deepfake detection algorithms. Actual deepfake detection requires advanced neural networks trained on large datasets of authentic and synthetic media.</p>
-        </div>
-      </div>
-    `;
+      `;
 
-    // Save result to Firebase if user is authenticated
-    if (typeof saveAnalysisResult !== 'undefined' && typeof auth !== 'undefined' && auth.currentUser) {
-      const resultData = {
-        status: status,
-        confidence: confidence + '%',
-        analysisDetails: 'Pixel-level inconsistencies detected in facial landmarks and lighting patterns.',
-        metadataCheck: 'No anomalies found in file metadata.',
-        technicalAssessment: 'This analysis is based on simulated deepfake detection algorithms. Actual deepfake detection requires advanced neural networks trained on large datasets of authentic and synthetic media.'
-      };
-      saveAnalysisResult(auth.currentUser.uid, 'deepfake', fileName, resultData);
+        // Save result to Firebase if user is authenticated
+        if (typeof saveAnalysisResult !== 'undefined' && typeof auth !== 'undefined' && auth.currentUser) {
+          saveAnalysisResult(auth.currentUser.uid, 'deepfake', fileName, data);
+        }
+      })
+      .catch(error => {
+        console.error('Backend connection error:', error);
+        resultDiv.innerHTML = `<p>Error: Could not connect to backend (${error.message || 'Unknown error'}). Please ensure the backend is running at http://127.0.0.1:5001.</p>`;
+        resultDiv.style.display = "block";
+      });
+  };
+
+  reader.onerror = function () {
+    resultDiv.innerHTML = `<p>Error reading file: ${file.name}</p>`;
+  };
+
+  reader.readAsDataURL(file);
+}
+
+// Function to show preview of selected file
+function previewFile() {
+  const fileInput = document.getElementById('deepfakeFile');
+  const fileDisplayArea = document.querySelector('.file-upload-area');
+
+  if (fileInput.files && fileInput.files[0]) {
+    const file = fileInput.files[0];
+
+    const reader = new FileReader();
+    reader.onload = function (e) {
+      const isImage = file.type.match('image.*');
+      const isVideo = file.type.match('video.*');
+
+      // Create preview HTML
+      let previewContent = "";
+      if (isImage) {
+        previewContent = `<img src="${e.target.result}" alt="Preview" style="max-width: 200px; max-height: 200px; margin-bottom: 10px; border-radius: 8px; border: 2px solid var(--accent-color);">`;
+      } else if (isVideo) {
+        previewContent = `<i class="fas fa-file-video" style="font-size: 48px; margin-bottom: 10px; color: var(--accent-color);"></i>`;
+      } else {
+        previewContent = `<i class="fas fa-file" style="font-size: 48px; margin-bottom: 10px; color: var(--accent-color);"></i>`;
+      }
+
+      const previewHtml = `
+        <div id="filePreviewContainer" style="display: flex; flex-direction: column; align-items: center; width: 100%;">
+          ${previewContent}
+          <p style="margin-bottom: 10px; word-break: break-all;">${file.name}</p>
+          <button class="browse-btn" onclick="document.getElementById('deepfakeFile').click()">Change File</button>
+        </div>
+      `;
+
+      // Hide the original input but keep it in the DOM
+      fileInput.style.display = 'none';
+
+      // Clear display area and re-add the input + the new preview
+      const currentInput = document.getElementById('deepfakeFile');
+      fileDisplayArea.innerHTML = '';
+      fileDisplayArea.appendChild(currentInput);
+      fileDisplayArea.insertAdjacentHTML('beforeend', previewHtml);
     }
-  }, 3000);
+
+    if (file.type.match('image.*')) {
+      reader.readAsDataURL(file);
+    } else {
+      // For non-images, just show the name and icon immediately
+      reader.onload({ target: { result: null } });
+    }
+  }
 }
 
 // CLEAR DEEPFAKE ANALYSIS
 function clearDeepfakeAnalysis() {
-  document.getElementById('deepfakeFile').value = "";
+  const fileDisplayArea = document.querySelector('.file-upload-area');
+  if (fileDisplayArea) {
+    fileDisplayArea.innerHTML = `
+      <i class="fas fa-cloud-upload-alt"></i>
+      <p>Drag & drop your image/video here or click to browse</p>
+      <input type="file" id="deepfakeFile" accept="image/*,video/*" onchange="previewFile()">
+      <button class="browse-btn" onclick="document.getElementById('deepfakeFile').click()">Browse Files</button>
+    `;
+  }
+
   const resultElement = document.getElementById('deepfakeResult');
   resultElement.innerHTML = "<p class='placeholder-text'>Deep fake detection results will appear here...</p>";
   resultElement.style.display = "flex";
@@ -231,6 +313,12 @@ function analyzeNews() {
   })
     .then(res => res.json())
     .then(data => {
+      // If backend returned an error or a fetch-failure note, show friendly message
+      if (data.status === 'Error' || (data.reason && data.reason.toLowerCase().includes('could not fetch'))) {
+        result.innerHTML = `<p class='placeholder-text'>Could not fetch the full content from the provided URL. Showing domain-level heuristics instead.</p>`;
+        if (data.reason) result.innerHTML += `<p>${data.reason}</p>`;
+        return;
+      }
       // Format the structured response nicely
       result.innerHTML = `
       <div class="analysis-results">
@@ -251,10 +339,10 @@ function analyzeNews() {
             <p>${data.reason}</p>
           </div>
           
-          ${data.correction_suggestion ? `
+          ${data.correction ? `
           <div class="detail-item correction-suggestion">
             <h4>Correction Suggestion</h4>
-            <p>${data.correction_suggestion}</p>
+            <p>${data.correction}</p>
           </div>
           ` : ''}
           
@@ -267,7 +355,7 @@ function analyzeNews() {
         
         <div class="full-analysis">
           <h4>Full Analysis</h4>
-          <pre>${data.analysis}</pre>
+          <pre>${data.analysis || 'Detailed analysis not available'}</pre>
         </div>
       </div>
     `;
@@ -278,7 +366,8 @@ function analyzeNews() {
       }
     })
     .catch(error => {
-      result.innerHTML = `<p>Error: Could not connect to backend (${error.message})</p>`;
+      console.error('Backend connection error:', error);
+      result.innerHTML = `<p>Error: Could not connect to backend (${error.message || 'Unknown error'}). Please ensure the backend is running at http://127.0.0.1:5001.</p>`;
       result.style.display = "block";
     });
 }
@@ -323,16 +412,16 @@ function analyzeLink() {
             <p>${data.reason}</p>
           </div>
           
-          ${data.correction_suggestion ? `
+          ${data.correction ? `
           <div class="detail-item correction-suggestion">
             <h4>Correct Information / Fact Check</h4>
-            <p>${data.correction_suggestion}</p>
+            <p>${data.correction}</p>
           </div>
           ` : ''}
           
           <div class="detail-item">
             <h4>Source Information</h4>
-            <p>${data.analysis.split('\n')[0]}</p>
+            <p>${data.analysis ? data.analysis.split('\n')[0] : data.reason || 'Analysis information not available'}</p>
           </div>
         </div>
       </div>
@@ -344,11 +433,115 @@ function analyzeLink() {
       }
     })
     .catch(error => {
-      result.innerHTML = `<p>Error: Could not connect to backend (${error.message})</p>`;
+      console.error('Backend connection error:', error);
+      result.innerHTML = `<p>Error: Could not connect to backend (${error.message || 'Unknown error'}). Note: API key not configured, using heuristic analysis only.</p>`;
       result.style.display = "block";
     });
 }
 
+
+// 🧠 ADVANCED ANALYSIS
+function analyzeAdvanced() {
+  const text = document.getElementById("newsInput").value;
+  const result = document.getElementById("newsResult");
+  const structuredResult = document.getElementById("newsStructuredResult");
+
+  if (!text) {
+    alert("Please enter news content to analyze.");
+    return;
+  }
+
+  result.innerHTML = "<p>Performing advanced analysis...</p>";
+  result.style.display = "block";
+  structuredResult.style.display = "none"; // Hide structured results during analysis
+
+  fetch("http://127.0.0.1:5001/analyze", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ text, type: "news" })
+  })
+    .then(res => res.json())
+    .then(data => {
+      // Format the regular response
+      result.innerHTML = `
+      <div class="analysis-results">
+        <div class="result-summary">
+          <div class="result-item">
+            <span class="label">Status:</span>
+            <span class="value status-${data.status.toLowerCase().replace(' ', '-').replace(/[^a-z0-9-]/g, '')}">${data.status}</span>
+          </div>
+          <div class="result-item">
+            <span class="label">Confidence:</span>
+            <span class="value">${(parseFloat(data.confidence) * 100).toFixed(1)}%</span>
+          </div>
+        </div>
+        
+        <div class="result-details">
+          <div class="detail-item">
+            <h4>Reasoning</h4>
+            <p>${data.reason}</p>
+          </div>
+          
+          ${data.correction ? `
+          <div class="detail-item correction-suggestion">
+            <h4>Correction Suggestion</h4>
+            <p>${data.correction}</p>
+          </div>
+          ` : ''}
+          
+          <div class="detail-item">
+            <h4>Privacy Risk</h4>
+            <p class="risk-${data.privacy_risk.toLowerCase()}">${data.privacy_risk}</p>
+            <p>${data.privacy_explanation}</p>
+          </div>
+        </div>
+      </div>
+    `;
+
+      // Format the structured response
+      structuredResult.innerHTML = `
+      <h4>Advanced Analysis Breakdown</h4>
+      <div class="structured-content">
+        <div class="structured-section">
+          <h5>Claims Verification</h5>
+          <ul>
+            <li><strong>Status:</strong> ${data.status}</li>
+            <li><strong>Confidence:</strong> ${(parseFloat(data.confidence) * 100).toFixed(1)}%</li>
+            <li><strong>Reasoning:</strong> ${data.reason}</li>
+          </ul>
+        </div>
+        
+        <div class="structured-section">
+          <h5>Privacy Assessment</h5>
+          <ul>
+            <li><strong>Risk Level:</strong> ${data.privacy_risk}</li>
+            <li><strong>Explanation:</strong> ${data.privacy_explanation}</li>
+          </ul>
+        </div>
+        
+        ${data.correction ? `
+        <div class="structured-section">
+          <h5>Correction & Fact Check</h5>
+          <p>${data.correction}</p>
+        </div>
+        ` : ''}
+      </div>
+      `;
+
+      structuredResult.style.display = "block"; // Show structured results
+
+      // Save result to Firebase if user is authenticated
+      if (typeof saveAnalysisResult !== 'undefined' && typeof auth !== 'undefined' && auth.currentUser) {
+        saveAnalysisResult(auth.currentUser.uid, 'news', text, data);
+      }
+    })
+    .catch(error => {
+      console.error('Backend connection error:', error);
+      result.innerHTML = `<p>Error: Could not connect to backend (${error.message || 'Unknown error'}). Note: API key not configured, using heuristic analysis only.</p>`;
+      result.style.display = "block";
+      structuredResult.style.display = "none";
+    });
+}
 
 // 🔐 PRIVACY ANALYSIS (SAME AI, DIFFERENT TAB)
 function analyzePrivacy() {
@@ -391,17 +584,17 @@ function analyzePrivacy() {
             <p>${data.reason}</p>
           </div>
           
-          ${data.correction_suggestion ? `
+          ${data.correction ? `
           <div class="detail-item correction-suggestion">
             <h4>Correction Suggestion</h4>
-            <p>${data.correction_suggestion}</p>
+            <p>${data.correction}</p>
           </div>
           ` : ''}
         </div>
         
         <div class="full-analysis">
           <h4>Full Analysis</h4>
-          <pre>${data.analysis}</pre>
+          <pre>${data.analysis || 'Detailed analysis not available'}</pre>
         </div>
       </div>
     `;
@@ -412,7 +605,8 @@ function analyzePrivacy() {
       }
     })
     .catch(error => {
-      result.innerHTML = `<p>Error: Could not connect to backend (${error.message})</p>`;
+      console.error('Backend connection error:', error);
+      result.innerHTML = `<p>Error: Could not connect to backend (${error.message || 'Unknown error'}). Note: API key not configured, using heuristic analysis only.</p>`;
       result.style.display = "block";
     });
 }

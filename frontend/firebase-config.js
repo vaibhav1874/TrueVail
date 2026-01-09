@@ -223,9 +223,11 @@ auth.onAuthStateChanged((user) => {
       window.location.href = "dashboard.html";
     }
   } else {
-    // User is signed out
-    if (window.location.pathname.includes("dashboard.html")) {
-      window.location.href = "login.html";
+    // User is signed out - allow access to dashboard for guest/demo mode
+    // Only redirect to login if specifically on login page or if restricted access is required
+    // Don't redirect from dashboard to login to allow guest access
+    if (window.location.pathname.includes("login.html")) {
+      // Stay on login page if user is not authenticated
     }
   }
 });

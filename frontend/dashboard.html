@@ -83,6 +83,9 @@
                 <button onclick="analyzeNews()" class="analyze-btn">
                   <i class="fas fa-search"></i> Analyze Content
                 </button>
+                <button onclick="analyzeAdvanced()" class="analyze-btn">
+                  <i class="fas fa-brain"></i> Advanced Analysis
+                </button>
                 <button onclick="clearContent('newsInput', 'newsResult')" class="clear-btn">
                   <i class="fas fa-trash"></i> Clear
                 </button>
@@ -100,6 +103,10 @@
 
               <div id="newsResult" class="result-content">
                 <p class="placeholder-text">Results will appear here after analysis...</p>
+              </div>
+              
+              <div id="newsStructuredResult" class="structured-result">
+                <!-- Advanced structured results will appear here -->
               </div>
             </div>
           </div>
@@ -194,7 +201,7 @@
               <div class="file-upload-area">
                 <i class="fas fa-cloud-upload-alt"></i>
                 <p>Drag & drop your image/video here or click to browse</p>
-                <input type="file" id="deepfakeFile" accept="image/*,video/*">
+                <input type="file" id="deepfakeFile" accept="image/*,video/*" onchange="previewFile()">
                 <button class="browse-btn">Browse Files</button>
               </div>
 
@@ -273,8 +280,21 @@
     </div>
   </div>
 
-  <script src="app.js"></script>
+  <script>
+    // Simple function to handle guest access
+    function checkAuthState() {
+      // If Firebase is not initialized or user is not authenticated, 
+      // we'll allow basic functionality for demo purposes
+      console.log('Checking authentication state...');
+    }
+    
+    // Call on page load
+    document.addEventListener('DOMContentLoaded', function() {
+      checkAuthState();
+    });
+  </script>
   <script src="firebase-config.js"></script>
+  <script src="app.js"></script>
 </body>
 
 </html>

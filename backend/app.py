@@ -3,13 +3,13 @@ from analyzer import analyze_news
 from flask_cors import CORS
 
 app = Flask(__name__)
-CORS(app)
+CORS(app, resources={r"/*": {"origins": "*"}})  # Allow all origins for development
 
 # ✅ HOME ROUTE
 @app.route("/", methods=["GET"])
 def home():
     return jsonify({
-        "status": "TruthLens backend is running on port 5001",
+        "status": "TrueVail backend is running on port 5001",
         "message": "Use POST /analyze to analyze content"
     })
 
@@ -18,12 +18,14 @@ def analyze():
     data = request.json
     text = data.get("text")
     analysis_type = data.get("type", "news")  # Default to news analysis
+    image_data = data.get("image_data") # base64 string
+    mime_type = data.get("mime_type")
 
-    if not text:
-        return jsonify({"analysis": "No text provided"})
+    if not text and not image_data:
+        return jsonify({"analysis": "No text or image provided"})
 
     try:
-        result = analyze_news(text, analysis_type=analysis_type)
+        result = analyze_news(text, analysis_type=analysis_type, image_data=image_data, mime_type=mime_type)
         return jsonify(result)
     except Exception as e:
         return jsonify({

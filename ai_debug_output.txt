@@ -1,0 +1,37 @@
+
+--- Fri Jan  9 14:01:08 2026 --- OLLAMA REQ (llama3.1) ---
+Prompt: Task: Classify data sensitivity.
+Input: My email is test@example.com and phone is 555-0199
+Instructions: Determine if the input contains sensitive personal data (Names, Emails, IDs).
+Do not write code...
+Ollama Status: 200
+Ollama Resp: Status: Medium
+Confidence: 80
+Explanation: The email address "test@example.com" is a potential identifier and could be used to target the individual with spam or phishing attempts, but it does not contain personally identifiable information (PII) such as names or IDs.
+
+--- Fri Jan  9 14:01:40 2026 --- OLLAMA REQ (llama3.1) ---
+Prompt: Task: Classify data sensitivity.
+Input: The weather is nice today.
+Instructions: Determine if the input contains sensitive personal data (Names, Emails, IDs).
+Do not write code.
+Response Format:
+Statu...
+Ollama Status: 200
+Ollama Resp: Status: Low
+Confidence: 90
+Explanation: The input does not contain any identifiable information such as names, emails, or IDs. It is a general statement about the weather.
+
+--- Fri Jan  9 14:02:24 2026 --- OLLAMA REQ (llama3.1) ---
+Prompt: You are an expert fact-checker. Verify the CONTENT below using 'REAL-TIME CONTEXT' as truth. Respond ONLY as: Status: [Likely Real/Likely Fake/Uncertain], Confidence: [0-100], Explanation: [Assessment...
+Ollama Status: 200
+Ollama Resp: Status: Likely Real, Confidence: 95, Explanation: The article appears to be a legitimate news report from the BBC, one of the most reputable news sources in the world. The URL is consistent with the BBC's standard format, and the content includes specific details about a current event (the US-China trade tensions) that can be verified through other credible sources. However, I couldn't verify the exact date or time stamp of the article to confirm its real-time context.
+
+--- Fri Jan  9 14:09:02 2026 --- OLLAMA REQ (llava) ---
+Prompt: Analyze this media for deepfakes, AI artifacts, or facial manipulation. Respond ONLY as: Verdict: [Likely Real/Likely Deepfake/Uncertain], Confidence: [0-100], Reasoning: [Short assessment]. Context: ...
+Images attached: 1
+Ollama Status: 200
+Ollama Resp:  Based on the image provided, it appears to be a screenshot of a computer screen displaying a webpage with various elements that could potentially be related to deepfakes or AI artifacts. However, without more context and specific details about the content of the page, it's challenging to provide a definitive verdict on whether the image contains deepfakes or AI artifacts.
+
+Verdict: Uncertain
+Confidence: 20
+Reasoning: The image is too blurry and lacks clear details that would allow for an accura
