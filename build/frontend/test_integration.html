@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>TrueVail Integration Test</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .test-section { margin: 20px 0; padding: 15px; border: 1px solid #ccc; border-radius: 5px; }
+        .result { margin: 10px 0; padding: 10px; background-color: #f0f0f0; border-radius: 3px; }
+        button { padding: 10px 15px; margin: 5px; background-color: #007bff; color: white; border: none; border-radius: 3px; cursor: pointer; }
+        button:hover { background-color: #0056b3; }
+        button:disabled { background-color: #cccccc; cursor: not-allowed; }
+    </style>
+</head>
+<body>
+    <h1>TrueVail API Integration Test</h1>
+    
+    <div class="test-section">
+        <h2>News Analysis Test</h2>
+        <textarea id="newsInput" placeholder="Enter news content to analyze" rows="4" cols="50">Scientists have discovered a new breakthrough in cancer treatment using immunotherapy.</textarea>
+        <br>
+        <button onclick="testNewsAnalysis()">Test News Analysis</button>
+        <div id="newsResult" class="result">Result will appear here...</div>
+    </div>
+    
+    <div class="test-section">
+        <h2>Privacy Analysis Test</h2>
+        <textarea id="privacyInput" placeholder="Enter text to check for privacy risks" rows="4" cols="50">My name is John Doe and my email is john.doe@example.com</textarea>
+        <br>
+        <button onclick="testPrivacyAnalysis()">Test Privacy Analysis</button>
+        <div id="privacyResult" class="result">Result will appear here...</div>
+    </div>
+    
+    <div class="test-section">
+        <h2>Deepfake Analysis Test</h2>
+        <input type="file" id="deepfakeFile" accept="image/*">
+        <br>
+        <button onclick="testDeepfakeAnalysis()">Test Deepfake Analysis</button>
+        <div id="deepfakeResult" class="result">Result will appear here...</div>
+    </div>
+
+    <script>
+        async function testNewsAnalysis() {
+            const text = document.getElementById('newsInput').value;
+            const resultDiv = document.getElementById('newsResult');
+            resultDiv.innerHTML = 'Sending request...';
+            
+            try {
+                const response = await fetch('http://127.0.0.1:5001/analyze', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        text: text,
+                        type: 'news'
+                    })
+                });
+                
+                const data = await response.json();
+                resultDiv.innerHTML = `<strong>Status:</strong> ${data.status}<br>
+                                       <strong>Confidence:</strong> ${(data.confidence * 100).toFixed(1)}%<br>
+                                       <strong>Reason:</strong> ${data.reason}<br>
+                                       <strong>Privacy Risk:</strong> ${data.privacy_risk}`;
+            } catch (error) {
+                resultDiv.innerHTML = `Error: ${error.message}`;
+            }
+        }
+        
+        async function testPrivacyAnalysis() {
+            const text = document.getElementById('privacyInput').value;
+            const resultDiv = document.getElementById('privacyResult');
+            resultDiv.innerHTML = 'Sending request...';
+            
+            try {
+                const response = await fetch('http://127.0.0.1:5001/analyze', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        text: text,
+                        type: 'privacy'
+                    })
+                });
+                
+                const data = await response.json();
+                resultDiv.innerHTML = `<strong>Status:</strong> ${data.status}<br>
+                                       <strong>Confidence:</strong> ${(data.confidence * 100).toFixed(1)}%<br>
+                                       <strong>Privacy Risk:</strong> ${data.privacy_risk}<br>
+                                       <strong>Explanation:</strong> ${data.privacy_explanation}`;
+            } catch (error) {
+                resultDiv.innerHTML = `Error: ${error.message}`;
+            }
+        }
+        
+        async function testDeepfakeAnalysis() {
+            const fileInput = document.getElementById('deepfakeFile');
+            const resultDiv = document.getElementById('deepfakeResult');
+            
+            if (!fileInput.files[0]) {
+                resultDiv.innerHTML = 'Please select a file first';
+                return;
+            }
+            
+            const file = fileInput.files[0];
+            resultDiv.innerHTML = 'Processing file...';
+            
+            // Read file as base64
+            const reader = new FileReader();
+            reader.onload = async function(e) {
+                const base64Data = e.target.result.split(',')[1]; // Get base64 part only
+                
+                try {
+                    const response = await fetch('http://127.0.0.1:5001/analyze', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            text: file.name,
+                            type: 'deepfake',
+                            image_data: base64Data,
+                            mime_type: file.type
+                        })
+                    });
+                    
+                    const data = await response.json();
+                    resultDiv.innerHTML = `<strong>Status:</strong> ${data.status}<br>
+                                           <strong>Confidence:</strong> ${(data.confidence * 100).toFixed(1)}%<br>
+                                           <strong>Reason:</strong> ${data.reason}<br>
+                                           <strong>Privacy Risk:</strong> ${data.privacy_risk}`;
+                } catch (error) {
+                    resultDiv.innerHTML = `Error: ${error.message}`;
+                }
+            };
+            
+            reader.readAsDataURL(file);
+        }
+    </script>
+</body>
+</html>

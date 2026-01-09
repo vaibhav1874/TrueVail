@@ -50,6 +50,40 @@ def trending_news():
             "message": f"Failed to fetch trending news: {str(e)}"
         }), 500
 
+# Health check endpoints
+@app.route('/health')
+def health_check():
+    """Health check endpoint for production monitoring"""
+    return jsonify({
+        "status": "healthy",
+        "service": "TrueVail Backend",
+        "version": "1.0.0"
+    })
+
+@app.route('/ready')
+def readiness_check():
+    """Readiness check endpoint"""
+    # In a real app, you might check database connections, etc.
+    return jsonify({
+        "status": "ready",
+        "service": "TrueVail Backend"
+    })
+
+# Error handlers for production
+@app.errorhandler(500)
+def internal_error(error):
+    return jsonify({
+        "error": "Internal server error",
+        "message": "An unexpected error occurred"
+    }), 500
+
+@app.errorhandler(404)
+def not_found(error):
+    return jsonify({
+        "error": "Resource not found",
+        "message": "The requested endpoint does not exist"
+    }), 404
+
 if __name__ == "__main__":
-    # Switching to port 5001 to avoid ghost process conflicts
-    app.run(debug=True, port=5001)
+    # For production, use debug=False and host 0.0.0.0
+    app.run(host='0.0.0.0', port=5001, debug=False)
